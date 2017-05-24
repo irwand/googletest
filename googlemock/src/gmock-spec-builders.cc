@@ -741,19 +741,21 @@ void Mock::RegisterUseByOnCallOrExpectCall(const void* mock_obj,
 // registry when the last mock method associated with it has been
 // unregistered.  This is called only in the destructor of
 // FunctionMockerBase.
-void Mock::UnregisterLocked(internal::UntypedFunctionMockerBase* mocker)
+void Mock::UnregisterLocked(const void* mock_obj,
+                            internal::UntypedFunctionMockerBase* mocker)
     GTEST_EXCLUSIVE_LOCK_REQUIRED_(internal::g_gmock_mutex) {
   internal::g_gmock_mutex.AssertHeld();
-  for (MockObjectRegistry::StateMap::iterator it =
-           g_mock_object_registry.states().begin();
-       it != g_mock_object_registry.states().end(); ++it) {
-    FunctionMockers& mockers = it->second.function_mockers;
-    if (mockers.erase(mocker) > 0) {
-      // mocker was in mockers and has been just removed.
-      if (mockers.empty()) {
-        g_mock_object_registry.states().erase(it);
+  if (mock_obj) {
+    MockObjectRegistry::StateMap::iterator it =
+      g_mock_object_registry.states().find(mock_obj);
+    if (it != g_mock_object_registry.states().end()) {
+      FunctionMockers& mockers = it->second.function_mockers;
+      if (mockers.erase(mocker) > 0) {
+        // mocker was in mockers and has been just removed.
+        if (mockers.empty()) {
+          g_mock_object_registry.states().erase(it);
+        }
       }
-      return;
     }
   }
 }

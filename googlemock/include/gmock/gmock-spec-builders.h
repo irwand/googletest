@@ -460,8 +460,10 @@ class GTEST_API_ Mock {
   // the registry when the last mock method associated with it has
   // been unregistered.  This is called only in the destructor of
   // FunctionMockerBase.
-  static void UnregisterLocked(internal::UntypedFunctionMockerBase* mocker)
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(internal::g_gmock_mutex);
+  static void UnregisterLocked(
+      const void* mock_obj,
+      internal::UntypedFunctionMockerBase* mocker)
+          GTEST_EXCLUSIVE_LOCK_REQUIRED_(internal::g_gmock_mutex);
 };  // class Mock
 
 // An abstract handle of an expectation.  Useful in the .After()
@@ -1472,7 +1474,7 @@ class FunctionMockerBase : public UntypedFunctionMockerBase {
         GTEST_LOCK_EXCLUDED_(g_gmock_mutex) {
     MutexLock l(&g_gmock_mutex);
     VerifyAndClearExpectationsLocked();
-    Mock::UnregisterLocked(this);
+    Mock::UnregisterLocked(this->mock_obj_, this);
     ClearDefaultActionsLocked();
   }
 
